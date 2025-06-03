@@ -45,8 +45,6 @@ jobs:
           context: ./WebAppj1
           push: true
           tags: ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       # 5. Extraer la imagen
       - name: Pull Docker image
