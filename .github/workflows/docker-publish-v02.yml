@@ -10,7 +10,7 @@ on:
 
 env:
   SOLUTION_NAME: 'WepApp.sln'  # Nombre de la solución
-  TEST_PROJECT: 'WebApp.Tests/WebApp.Tests.csproj'
+  TEST_PROJECT: 'WebApp.Tests/WebApp.Tests.csproj'  # Nombre del proyecto Test
   DOTNET_VERSION: '8.0.x'  # Usar la versión adecuada para su proyecto
   ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app
   IMAGE_TAG: ${{ github.sha }} 
@@ -22,12 +22,6 @@ jobs:
       # Obtener código fuente
       - name: Checkout code
         uses: actions/checkout@v4
-
-    # Añade este paso para instalar libssl1.0
-      # - name: Install dependencies
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y libssl1.0.0 libicu-dev
 
       # Version de .Net Core
       - name: Setup .NET Core
