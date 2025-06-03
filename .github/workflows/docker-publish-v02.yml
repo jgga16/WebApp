@@ -80,13 +80,13 @@ jobs:
             -reporttypes:Html;Cobertura
 
       - name: Publish test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Test-Results
           path: ./TestResults
 
       - name: Publish coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Coverage-Report
           path: ./CoverageReport
