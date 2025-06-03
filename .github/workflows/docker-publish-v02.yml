@@ -6,10 +6,10 @@ on:
     paths:
       - 'Dockerfile'   # Solo se activa cuando cambia el Dockerfile
       - 'WebAppj1/**'  # Carpeta del proyecto principal
-      - 'WebApp.Tests/**'   # Carpeta del proyecto de pruebas
+      - 'WebAppJ1.Tests/**'   # Carpeta del proyecto de pruebas
 
 env:
-  SOLUTION_NAME: 'WepApp.sln'  # Nombre de la solución
+  SOLUTION_NAME: '../WepApp.sln'  # Nombre de la solución
   TEST_PROJECT: 'WebApp.Tests/WebApp.Tests.csproj'  # Nombre del proyecto Test
   DOTNET_VERSION: '8.0.x'  # Usar la versión adecuada para su proyecto
   ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app
