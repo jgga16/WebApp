@@ -11,7 +11,7 @@ on:
 env:
   SOLUTION_NAME: 'WepApp.sln'  # Nombre de la solución
   TEST_PROJECT: 'WebApp.Tests/WebApp.Tests.csproj'
-  DOTNET_VERSION: '3.1.x'  # Usar la versión adecuada para su proyecto
+  DOTNET_VERSION: '8.0.x'  # Usar la versión adecuada para su proyecto
   ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app
   IMAGE_TAG: ${{ github.sha }} 
 
