@@ -67,7 +67,7 @@ jobs:
           dotnet test ${{ env.TEST_PROJECT }} \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
-            --settings coverlet.runsettings \
+            --settings ./coverlet.runsettings \  # Ruta relativa al archivo
             --logger trx \
             --results-directory ./TestResults
 
