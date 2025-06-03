@@ -2,10 +2,10 @@ name: Build, Push and Pull from ACR
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'Dockerfile'   # Solo se activa cuando cambia el Dockerfile
-      - 'src/**'       # o los directorios relevantes de tu aplicación
+      - 'WebAppj1/**'       # o los directorios relevantes de tu aplicación
 
 jobs:
   acr-build-push-pull:
