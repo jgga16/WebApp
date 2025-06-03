@@ -9,7 +9,7 @@ namespace WebAppj1.Services
     {
         private static readonly string[] Summaries = new[]
         {
-            "uno-1", "dos-2", "tres-3", "cuatro-4", "cinco-5", "seis", "siete", "ocho", "nueve", "diez"
+            "uno-1", "dos-2", "tres-3", "cuatro-4", "cinco-5", "seis-6", "siete", "ocho", "nueve", "diez"
         };
 
         public IEnumerable<WeatherForecast> GetDatos()
