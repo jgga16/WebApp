@@ -23,6 +23,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Cache para los paquetes NuGet
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.nuget/packages
+            **/bin
+            **/obj
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+
       # Version de .Net Core
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
@@ -46,8 +59,37 @@ jobs:
         run: dotnet build ${{ env.SOLUTION_NAME }} --configuration Release --no-restore
 
       # Ejecutar pruebas unitarias
-      - name: Run unit tests
-        run: dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build --verbosity normal
+      #- name: Run unit tests
+      #  run: dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build --verbosity normal
+
+      - name: Run tests with coverage
+        run: |
+          dotnet test ${{ env.TEST_PROJECT }} \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --settings coverlet.runsettings \
+            --logger trx \
+            --results-directory ./TestResults
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          reportgenerator \
+            -reports:./TestResults/**/coverage.cobertura.xml \
+            -targetdir:./CoverageReport \
+            -reporttypes:Html;Cobertura
+
+      - name: Publish test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Test-Results
+          path: ./TestResults
+
+      - name: Publish coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: Coverage-Report
+          path: ./CoverageReport
 
 
   acr-build-push-pull:
