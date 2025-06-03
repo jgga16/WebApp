@@ -9,8 +9,8 @@ on:
       - 'WebAppJ1.Tests/**'   # Carpeta del proyecto de pruebas
 
 env:
-  SOLUTION_NAME: '../WepApp.sln'  # Nombre de la solución
-  TEST_PROJECT: 'WebApp.Tests/WebApp.Tests.csproj'  # Nombre del proyecto Test
+  SOLUTION_NAME: 'WebApp.sln'  # Nombre de la solución
+  TEST_PROJECT: 'WebAppJ1.Tests/WebAppJ1.Tests.csproj'  # Nombre del proyecto Test
   DOTNET_VERSION: '8.0.x'  # Usar la versión adecuada para su proyecto
   ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app
   IMAGE_TAG: ${{ github.sha }} 
@@ -28,6 +28,14 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
             dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Dependencias Proyecto 1
+      - name: Restore dependencies Proyecto 1
+        run: dotnet restore ${{ env.TEST_PROJECT }}
+
+        # Build Proyecto 1
+      - name: Build Proyecto 1
+        run: dotnet build ${{ env.TEST_PROJECT }} --configuration Release --no-restore
 
       # Dependencias
       - name: Restore dependencies
