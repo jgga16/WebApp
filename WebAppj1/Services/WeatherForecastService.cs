@@ -18,7 +18,7 @@ namespace WebAppj1.Services
             "siete", 
             "ocho", 
             "nueve", 
-            "diez"
+            "diez-10"
         };
 
         public IEnumerable<WeatherForecast> GetDatos()
