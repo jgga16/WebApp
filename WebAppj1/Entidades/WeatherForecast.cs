@@ -1,6 +1,6 @@
 using System;
 
-namespace WebAppj1
+namespace WebAppj1.Entidades
 {
     public class WeatherForecast
     {
