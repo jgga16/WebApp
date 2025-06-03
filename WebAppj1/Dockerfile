@@ -10,7 +10,7 @@ COPY ["WebAppj1.csproj", "WebAppj1/"]
 RUN dotnet restore "WebAppj1/WebAppj1.csproj"
 
 # Copia el resto y publica
-COPY . .
+COPY ["WebAppj1/", "WebAppj1/"]
 WORKDIR "/src/WebAppj1"
 RUN ls
 RUN dotnet publish "WebAppj1.csproj" -c Release -o /app/publish --no-restore
