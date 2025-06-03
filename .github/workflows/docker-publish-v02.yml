@@ -65,11 +65,13 @@ jobs:
       - name: Run tests with coverage
         run: |
           dotnet test ${{ env.TEST_PROJECT }} \
-            --configuration Release \
-            --collect:"XPlat Code Coverage" \
-            --settings "./coverlet.runsettings" \  # Ruta relativa al archivo
-            --logger trx \
-            --results-directory ./TestResults
+          --configuration Release \
+          --collect:"XPlat Code Coverage" \
+          --logger trx \
+          --results-directory ./TestResults \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=cobertura \
+          /p:Exclude=\"[WebAppJ1.Tests]*\"
 
       - name: Generate coverage report
         run: |
