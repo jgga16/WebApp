@@ -30,7 +30,7 @@ jobs:
       # 3. Construir imagen
       - name: Build Docker image
         run: |
-          docker build -t ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./WebAppj1
+          docker build -t ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f WebAppj1/Dockerfile .
 
       # 4. Subir a ACR
       - name: Push Docker image
