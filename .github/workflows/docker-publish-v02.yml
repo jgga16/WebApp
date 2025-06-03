@@ -121,4 +121,31 @@ jobs:
       # Verificación: Extraer imagen
       - name: Pull Docker image
         run: |
-          docker pull ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}      
+          docker pull ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}     
+
+
+  # Job para notificaciones de falla
+  notify-on-failure:
+    if: ${{ failure() }}  # Solo se ejecuta si algún job anterior falla
+    needs: [build-and-test, acr-build-push-pull]  # Depende de ambos jobs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send failure email via SendGrid
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.sendgrid.net
+          server_port: 587
+          username: apikey
+          password: ${{ secrets.SENDGRID_API_KEY }}
+          subject: "🚨 Build Failed: ${{ github.repository }}"
+          body: |
+            <h2>❌ Workflow Failed</h2>
+            <p><b>Repository:</b> ${{ github.repository }}</p>
+            <p><b>Branch:</b> ${{ github.ref }}</p>
+            <p><b>Commit:</b> ${{ github.sha }}</p>
+            <p><b>Workflow:</b> ${{ github.workflow }}</p>
+            <p><b>Failed Job:</b> ${{ matrix.job-statuses.job.name }}</p>
+            <p><b>Details:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">View Run</a></p>
+          to: ${{ secrets.EMAIL_TO }}
+          from: GitHub Actions <${{ secrets.EMAIL_FROM }}>
+          content_type: text/html
