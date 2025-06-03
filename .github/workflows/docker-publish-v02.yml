@@ -33,6 +33,11 @@ jobs:
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
+      - name: Build and push
+        run: |
+          docker build -t ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+          docker push ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          
       # 4. Construir y subir la imagen (en un solo paso)
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
