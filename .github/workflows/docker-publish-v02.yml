@@ -58,9 +58,6 @@ jobs:
       - name: Build solution
         run: dotnet build ${{ env.SOLUTION_NAME }} --configuration Release --no-restore
 
-      # Ejecutar pruebas unitarias
-      #- name: Run unit tests
-      #  run: dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build --verbosity normal
 
       - name: Run tests with coverage
         run: |
