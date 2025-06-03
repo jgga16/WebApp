@@ -126,6 +126,27 @@ jobs:
           docker pull ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}     
 
 
+  deploy-webapp:
+    needs: acr-build-push-pull  # Depende del job de construcción
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+      - name: Update Web App container image
+        run: |
+          az webapp config container set \
+            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --docker-custom-image-name ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+            --docker-registry-server-url https://${{ secrets.ACR_REGISTRY }}
+          
+          # Opcional: Reiniciar la aplicación para asegurar cambios
+          az webapp restart --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
+
+
   # Job para notificaciones de falla
   notify-on-failure:
     if: ${{ failure() }}  # Solo se ejecuta si algún job anterior falla
@@ -140,14 +161,62 @@ jobs:
           username: apikey
           password: ${{ secrets.SENDGRID_API_KEY }}
           subject: "🚨 Build Failed: ${{ github.repository }}"
-          body: |
-            <h2>❌ Workflow Failed</h2>
-            <p><b>Repository:</b> ${{ github.repository }}</p>
-            <p><b>Branch:</b> ${{ github.ref }}</p>
-            <p><b>Commit:</b> ${{ github.sha }}</p>
-            <p><b>Workflow:</b> ${{ github.workflow }}</p>
-            <p><b>Failed Job:</b> ${{ matrix.job-statuses.job.name }}</p>
+          html_body: |
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e1e4e8; border-radius: 6px; padding: 20px;">
+            <h2 style="color: #cb2431;">❌ Workflow Failed</h2>
+        
+            <div style="margin-bottom: 15px;">
+              <strong>Repository:</strong> ${{ github.repository }}
+            </div>
+        
+            <div style="margin-bottom: 15px;">
+              <strong>Branch:</strong> ${{ github.ref }}
+            </div>
+        
+            <div style="margin-bottom: 15px;">
+              <strong>Commit:</strong> ${{ github.sha }}
+            </div>
+        
+            <div style="margin-bottom: 15px;">
+              <strong>Workflow:</strong> ${{ github.workflow }}
+            </div>
+        
+            <div style="margin-bottom: 20px;">
+              <strong>Details:</strong> 
+              <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" 
+                 style="color: #0366d6; text-decoration: none;">
+                View Run Details
+              </a>
+            </div>
+        
+            <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+               style="display: inline-block; background-color: #cb2431; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Investigar Error
+            </a>
+            </div>
+          to: ${{ secrets.EMAIL_TO }}
+          from: GitHub Actions <${{ secrets.EMAIL_FROM }}>
+
+
+ # Ejemplo de notificación para builds exitosos
+  notify-ok:
+    if: ${{ success() }}
+    needs: [build-and-test, acr-build-push-pull]  # Depende de ambos jobs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify success
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.sendgrid.net
+          server_port: 587
+          username: apikey
+          password: ${{ secrets.SENDGRID_API_KEY }}
+          subject: "✅ Build Success: ${{ github.repository }}"
+          html_body: |
+            <h2>✔️ Workflow Completed Successfully</h2>
+            <p><b>Image:</b> ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}</p>
+            <p><b>Cobertura:</b> ${{ steps.coverage.outputs.percentage }}%</p>
             <p><b>Details:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">View Run</a></p>
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub Actions <${{ secrets.EMAIL_FROM }}>
-          content_type: text/html
+
