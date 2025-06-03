@@ -13,7 +13,7 @@ namespace WebAppj1.Services
             "dos", 
             "tres", 
             "cuatro", 
-            "cinco", 
+            "cinco-5", 
             "seis", 
             "siete", 
             "ocho", 
