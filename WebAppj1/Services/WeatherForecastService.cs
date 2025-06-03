@@ -9,7 +9,7 @@ namespace WebAppj1.Services
     {
         private static readonly string[] Summaries = new[]
         {
-            "uno-1", 
+            "uno", 
             "dos", 
             "tres", 
             "cuatro", 
