@@ -11,7 +11,7 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["WebAppj1/WebAppj1.csproj", "WebAppj1/"]
+COPY ["./WebAppj1/WebAppj1.csproj", "WebAppj1/"]
 RUN dotnet restore "./WebAppj1/WebAppj1.csproj"
 COPY . .
 WORKDIR "/src/WebAppj1"
