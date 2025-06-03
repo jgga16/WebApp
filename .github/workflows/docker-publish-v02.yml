@@ -22,6 +22,8 @@ jobs:
       # 2. Configurar Docker Buildx (mejor rendimiento)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          driver: docker-container  # Driver que soporta caché
 
       # 3. Autenticación con Azure Container Registry
       - name: Login to ACR
@@ -35,7 +37,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./WebAppj1
           push: true
           tags: ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           cache-from: type=gha
