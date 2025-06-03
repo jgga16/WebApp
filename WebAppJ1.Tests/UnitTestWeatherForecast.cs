@@ -18,7 +18,7 @@ namespace WebAppJ1.Tests
         public void Test1()
         {
             var datos =  forecastService.GetDatos();
-            Assert.AreEqual(5, datos.Count());
+            Assert.That(datos.Count(), Is.EqualTo(5));
             Assert.Pass();
         }
     }
