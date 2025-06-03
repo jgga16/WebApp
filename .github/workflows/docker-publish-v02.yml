@@ -1,25 +1,56 @@
-name: Build, Push and Pull from ACR
+name: Build, Test, Push and Pull from ACR
 
 on:
   push:
     branches: [ master ]
     paths:
       - 'Dockerfile'   # Solo se activa cuando cambia el Dockerfile
-      - 'WebAppj1/**'       # o los directorios relevantes de tu aplicación
+      - 'WebAppj1/**'  # Carpeta del proyecto principal
+      - 'WebApp.Tests/**'   # Carpeta del proyecto de pruebas
+
+env:
+  SOLUTION_NAME: 'WepApp.sln'  # Nombre de la solución
+  TEST_PROJECT: 'WebApp.Tests/WebApp.Tests.csproj'
+  DOTNET_VERSION: '3.1.x'  # Usar la versión adecuada para su proyecto
+  ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app
+  IMAGE_TAG: ${{ github.sha }} 
 
 jobs:
-  acr-build-push-pull:
+  build-and-test:
     runs-on: ubuntu-latest
-    env:
-      ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app
-      IMAGE_TAG: ${{ github.sha }}
-
     steps:
-      # 1. Obtener código fuente
+      # Obtener código fuente
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 3. Autenticación con Azure Container Registry
+      # Version de .Net Core
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+            dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Dependencias
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_NAME }}
+
+      # Build la solución
+      - name: Build solution
+        run: dotnet build ${{ env.SOLUTION_NAME }} --configuration Release --no-restore
+
+      # Ejecutar pruebas unitarias
+      - name: Run unit tests
+        run: dotnet test ${{ env.TEST_PROJECT }} --configuration Release --no-build --verbosity normal
+
+
+  acr-build-push-pull:
+    needs: build-and-test  # Solo se ejecuta si las pruebas pasan
+    runs-on: ubuntu-latest
+    steps:
+      # Obtener código fuente
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Autenticación con Azure Container Registry
       - name: Login to ACR
         uses: azure/docker-login@v1
         with:
@@ -27,17 +58,17 @@ jobs:
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      # 3. Construir imagen
+      # Construir imagen
       - name: Build Docker image
         run: |
           docker build -t ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./WebAppj1
 
-      # 4. Subir a ACR
+      # Subir a ACR
       - name: Push Docker image
         run: |
           docker push ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
-      # 5. Verificación: Extraer imagen
+      # Verificación: Extraer imagen
       - name: Pull Docker image
         run: |
           docker pull ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}      
