@@ -4,26 +4,29 @@ on:
   push:
     branches: [ master ]
     paths:
-      - 'Dockerfile'   # Solo se activa cuando cambia el Dockerfile
-      - 'WebAppj1/**'  # Carpeta del proyecto principal
+      - 'Dockerfile'          # Solo se activa cuando cambia el Dockerfile
+      - 'WebAppj1/**'         # Carpeta del proyecto principal
       - 'WebAppJ1.Tests/**'   # Carpeta del proyecto de pruebas
 
 env:
-  SOLUTION_NAME: 'WebApp.sln'  # Nombre de la solución
+  SOLUTION_NAME: 'WebApp.sln'                           # Nombre de la solución
   TEST_PROJECT: 'WebAppJ1.Tests/WebAppJ1.Tests.csproj'  # Nombre del proyecto Test
-  DOTNET_VERSION: '8.0.x'  # Usar la versión adecuada para su proyecto
-  ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app
-  IMAGE_TAG: ${{ github.sha }} 
+  DOTNET_VERSION: '8.0.x'                               # Usar la versión adecuada para su proyecto
+  ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app    # Nombre de la imagen a crear
+  IMAGE_TAG: ${{ github.sha }}                          # Nombre del Tag de la imagen a crear
 
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
+    # Define outputs para pasar el porcentaje a otros jobs
+    outputs:
+      coverage-percentage: ${{ steps.extract-coverage.outputs.percentage }}
     steps:
-      # Obtener código fuente
+      # Obtiene el código fuente
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Cache para los paquetes NuGet
+      # Cache para los paquetes NuGet actions/*
       - name: Cache NuGet packages
         uses: actions/cache@v3
         with:
@@ -36,7 +39,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
 
-      # Version de .Net Core
+      # Instala la versión de .Net Core
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
         with:
@@ -70,6 +73,7 @@ jobs:
           /p:CoverletOutputFormat=cobertura \
           /p:Exclude=\"[WebAppJ1.Tests]*\"
 
+
       - name: Generate coverage report
         run: |
           dotnet tool install -g dotnet-reportgenerator-globaltool
@@ -77,6 +81,21 @@ jobs:
             -reports:./TestResults/**/coverage.cobertura.xml \
             -targetdir:./CoverageReport \
             "-reporttypes:Html;Cobertura"  # ¡Comillas importantes!
+
+
+      - name: Extract coverage percentage
+        id: extract-coverage
+        run: |
+          # Instala dependencia necesaria para cálculos
+          sudo apt-get install -y bc
+          
+          # Extrae el porcentaje de cobertura
+          LINE_RATE=$(grep -oP 'line-rate="\K[0-9.]+' ./CoverageReport/Cobertura.xml | head -1)
+          PERCENTAGE=$(echo "$LINE_RATE * 100" | bc -l | awk '{printf "%.2f\n", $0}')
+          
+          # Guarda como output
+          echo "percentage=$PERCENTAGE" >> $GITHUB_OUTPUT
+          echo "Coverage percentage: $PERCENTAGE%"
 
       - name: Publish test results
         uses: actions/upload-artifact@v4
@@ -140,7 +159,7 @@ jobs:
             --docker-custom-image-name ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
             --docker-registry-server-url https://${{ secrets.ACR_REGISTRY }}
           
-          # Opcional: Reiniciar la aplicación para asegurar cambios
+          # Opcional: Reinicia la aplicación para asegurar cambios
           az webapp restart --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
 
 
@@ -195,10 +214,10 @@ jobs:
           from: GitHub Actions <${{ secrets.EMAIL_FROM }}>
 
 
- # Ejemplo de notificación para builds exitosos
+ # Job de notificación para builds exitosos
   notify-ok:
     if: ${{ success() }}
-    needs: [build-and-test, acr-build-push-pull]  # Depende de ambos jobs
+    needs: [build-and-test, acr-build-push-pull, deploy-webapp]  # Depende de ambos jobs
     runs-on: ubuntu-latest
     steps:
       - name: Notify success
@@ -210,10 +229,17 @@ jobs:
           password: ${{ secrets.SENDGRID_API_KEY }}
           subject: "✅ Build Success: ${{ github.repository }}"
           html_body: |
-            <h2>✔️ Workflow Completed Successfully</h2>
-            <p><b>Image:</b> ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}</p>
-            <p><b>Cobertura:</b> ${{ steps.coverage.outputs.percentage }}%</p>
-            <p><b>Details:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">View Run</a></p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e1e4e8; border-radius: 6px; padding: 20px;">
+              <h2 style="color: #2cbe4e;">✔️ Workflow Completed Successfully</h2>
+              <p><b>Repository:</b> ${{ github.repository }}</p>
+              <p><b>Image:</b> ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}</p>
+              <p><b>Cobertura:</b> ${{ needs.build-and-test.outputs.coverage-percentage }}%</p>
+              <p><b>Details:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">View Run</a></p>
+              <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                 style="display: inline-block; background-color: #2cbe4e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                Ver Detalles
+              </a>
+            </div>
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub Actions <${{ secrets.EMAIL_FROM }}>
 
