@@ -1,0 +1,52 @@
+name: Build, Push and Pull from ACR
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Dockerfile'   # Solo se activa cuando cambia el Dockerfile
+      - 'src/**'       # o los directorios relevantes de tu aplicación
+
+jobs:
+  acr-build-push-pull:
+    runs-on: ubuntu-latest
+    env:
+      ACR_IMAGE_NAME: ${{ secrets.ACR_REGISTRY }}/mi-app
+      IMAGE_TAG: ${{ github.sha }}
+
+    steps:
+      # 1. Obtener código fuente
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Configurar Docker Buildx (mejor rendimiento)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # 3. Autenticación con Azure Container Registry
+      - name: Login to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_REGISTRY }}
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      # 4. Construir y subir la imagen (en un solo paso)
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 5. Extraer la imagen
+      - name: Pull Docker image
+        run: docker pull ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      # 6. (Opcional) Verificar la imagen
+      - name: Inspect image
+        run: |
+          docker image inspect ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          docker history ${{ env.ACR_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
