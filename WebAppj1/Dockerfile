@@ -6,7 +6,7 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
 WORKDIR /src
 # Copia solo el .csproj primero (mejora caching de Docker)
-COPY ["WebAppj1/WebAppj1.csproj", "WebAppj1/"]
+COPY ["WebAppj1.csproj", "WebAppj1/"]
 RUN dotnet restore "WebAppj1/WebAppj1.csproj"
 
 # Copia el resto y publica
